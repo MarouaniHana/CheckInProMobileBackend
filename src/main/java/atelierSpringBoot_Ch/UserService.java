@@ -3,6 +3,8 @@ package atelierSpringBoot_Ch;
 
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,7 +63,23 @@ public class UserService {
 			return userRepository.findById(id).orElse(null);
 		}
     
+		 public User updateActiveStatus(Long userId, boolean isActive) {
+		        Optional<User> optionalUser = userRepository.findById(userId);
+		        if (optionalUser.isEmpty()) {
+		            throw new RuntimeException("Utilisateur introuvable avec l'ID: " + userId);
+		        }
+
+		        User user = optionalUser.get();
+		        user.setActive(isActive); // Modifier uniquement l'attribut "active".
+		        return userRepository.save(user); // Sauvegarder les modifications.
+		    }
 	    
+		 public List<User> getActiveUsers() {
+		        return userRepository.findAll()
+		                             .stream()
+		                             .filter(User::isActive) // Filtre les utilisateurs avec active == true
+		                             .collect(Collectors.toList());
+		    }
 	    
 	    
 }

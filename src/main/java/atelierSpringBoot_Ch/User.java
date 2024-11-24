@@ -25,7 +25,14 @@ public class User {
     private String adresseComplet;
     private String telephone;
     private String roles;
-    @Lob
+    private boolean active;
+    public boolean isActive() {
+		return active;
+	}
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+	@Lob
     private byte[] image;
     private String dateDebutTravail;
 	public Long getId() {

@@ -13,13 +13,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.mail.MessagingException;
+
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
-
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -152,6 +157,51 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
        }
+
+    @PostMapping("/{id}/send-email")
+    public ResponseEntity<?> sendEmailToUser(@PathVariable Long id) {
+        try {
+            User user = userService.findUserById(id);
+            if (user != null) {
+                emailService.sendEmailAttachment(
+                    user.getEmail(),
+                    " Confirmation de votre inscription",
+                    "Bonjour " + user.getPrenom()+ " Nous avons le plaisir de vous informer que votre demande d'inscription a été acceptée avec succès. Vous faites désormais partie de notre communauté.\r\n"
+                    		+ "\r\n"
+                    		+ "Voici quelques informations importantes pour commencer :\r\n"
+                    		+ "- Accédez à votre compte en ligne : https://www.winshot.net/\r\n"
+                    		+ "- En cas de besoin, notre équipe est disponible pour vous assister.\r\n"
+                    		+ "\r\n"
+                    		+ "Si vous avez des questions ou besoin d'assistance, n'hésitez pas à nous contacter à 20550162.\r\n"
+                    		+ "\r\n"
+                    		+ "Nous vous remercions pour votre confiance et vous souhaitons une excellente expérience avec nous."
+                );
+                return ResponseEntity.ok("Email envoyé avec succès.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur introuvable.");
+            }
+        } catch (MessagingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'envoi de l'email.");
+        }
+    }
+    @PutMapping("active/{id}")
+    public ResponseEntity<?> updateActiveStatus(@PathVariable Long id, @RequestBody Map<String, Boolean> updates) {
+        Boolean isActive = updates.get("active");
+        if (isActive == null) {
+            return ResponseEntity.badRequest().body("Le champ 'active' est manquant ou incorrect.");
+        }
+
+        try {
+            User updatedUser = userService.updateActiveStatus(id, isActive);
+            return ResponseEntity.ok("Statut actif de l'utilisateur mis à jour avec succès.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
     
+    @GetMapping("/active")
+    public List<User> getActiveUsers() {
+        return userService.getActiveUsers(); 
+    }
     
 }
