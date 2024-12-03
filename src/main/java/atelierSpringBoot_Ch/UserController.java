@@ -32,56 +32,26 @@ public class UserController {
     
     
     
-    @PostMapping(value = "/si", consumes = {"multipart/form-data"})
-    public ResponseEntity<?> signup(
-            @RequestParam("nom") String nom,
-            @RequestParam("prenom") String prenom,
-            @RequestParam("email") String email,
-            @RequestParam("username") String username,
-            @RequestParam("password") String password,
-            @RequestParam("telephone") String telephone,
-            @RequestParam("cin") String cin,
-            @RequestParam("poste")String poste,
-            @RequestParam("adresseComplet")String adresseComplet,
-            @RequestParam("dateNaissance")String dateNaissance,
-            @RequestParam("dateDebutTravail")String dateDebutTravail,
-            @RequestParam(value = "image", required = false) MultipartFile image) {
-        
+    @PostMapping(value = "/si", consumes = {"application/json"})
+    public ResponseEntity<?> signup(@RequestBody User user) {
         try {
-            User user = new User();
-            user.setNom(nom);
-            user.setPrenom(prenom);
-            user.setEmail(email);
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setTelephone(telephone);
-            user.setCin(cin);
-            user.setPoste(poste);
-            user.setDateNaissance(dateNaissance);
-            user.setDateDebutTravail(dateDebutTravail);
-            
-            user.setAdresseComplet(adresseComplet);
-            if (image != null && !image.isEmpty()) {
-                user.setImage(image.getBytes());
-            }
-
-            // Vérifier les doublons
-            if (userService.existsByEmail(email)) {
+            // Check if the email or username already exists
+            if (userService.existsByEmail(user.getEmail())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Email déjà utilisé");
             }
 
-            if (userService.existsByUsername(username)) {
+            if (userService.existsByUsername(user.getUsername())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("Nom d'utilisateur déjà utilisé");
             }
 
-            // Ajouter l'utilisateur
+            // Add the new user
             User newUser = userService.addUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
-
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'enregistrement de l'image");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'inscription");
         }
     }
+
     @PostMapping("/work")
     public WorkSession createSession(@RequestBody WorkSession session) {
         return service.save(session);
@@ -113,16 +83,14 @@ public class UserController {
   
        
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        User user = userService.findByEmailAndPassword(loginRequest.getEmail(), loginRequest.getPassword());
-
-        if (user != null) {
-            return ResponseEntity.ok(user);  // Connexion réussie
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiants incorrects");  // Échec de la connexion
-        }
-             
-    }
+	public ResponseEntity<User> getUserByEmailAndPassword(@RequestBody LoginRequest loginReq) {
+	    User user = userService.findUserByEmailAndPassword(loginReq.getEmail(), loginReq.getPassword());
+	    if (user != null) {
+	        return ResponseEntity.ok(user);
+	    } else {
+	        return ResponseEntity.status(401).build(); // Unauthorized
+	    }
+	}
     
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
@@ -203,5 +171,12 @@ public class UserController {
     public List<User> getActiveUsers() {
         return userService.getActiveUsers(); 
     }
+    
+    @PostMapping 
+	public User createUser(@RequestBody User user){ 
+    	return userService.addUser(user); 
+	}
+    
+    
     
 }

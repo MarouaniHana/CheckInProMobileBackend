@@ -8,13 +8,14 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 @Service
 public class UserService {
 	   @Autowired
 	    private UserRepository userRepository;
 
 	 
-	    public User addUser(User user) {
+	    /*public User addUser(User user) {
 	        
 	        if (userRepository.existsByUsername(user.getUsername())) {
 	            throw new IllegalArgumentException("Username already exists");
@@ -23,7 +24,7 @@ public class UserService {
 	            throw new IllegalArgumentException("Email already exists");
 	        }
 	        return userRepository.save(user);
-	    }
+	    }*/
 	    
 	    public boolean existsByEmail(String email) {
 	        return userRepository.existsByEmail(email);
@@ -57,6 +58,11 @@ public class UserService {
 	    } 
 	    
 	    
+	    public User addUser(User user) {
+	        return userRepository.save(user);  // Save user
+	    }
+
+	    
 	    
 		public User findUserById(Long id) {
 			// TODO Auto-generated method stub
@@ -80,6 +86,10 @@ public class UserService {
 		                             .filter(User::isActive) // Filtre les utilisateurs avec active == true
 		                             .collect(Collectors.toList());
 		    }
+
+		public User findUserByEmailAndPassword(String email, String password) {
+			return userRepository.findByEmailAndPassword(email, password);
+		}
 	    
 	    
 }
